@@ -158,6 +158,25 @@ Tunnel, Telegram bot, Wear OS build).
 - External fetching is SSRF-guarded (private / loopback / metadata IPs rejected).
 - Shell/exec features are **off by default**, behind an explicit opt-in flag.
 
+## Roadmap
+
+| Area | Status |
+|---|---|
+| Multi-agent orchestration & evidence model | ✅ Shipped |
+| Provider-agnostic LLM pool (failover) | ✅ Shipped |
+| Telegram interface | ✅ Shipped |
+| Live web console (office + systems panel) | ✅ Shipped |
+| Wear OS watch face + companion | ✅ Shipped |
+| Zero-cost tiering (code-first, LLM-last) | ✅ Shipped |
+| Real multi-provider free pool (Gemini · Groq · Cloudflare) | ✅ Shipped |
+| PWA install ("add to home screen") | 🚧 Planned |
+| Health companion reference (private) | 🔒 Documented, not shipped |
+| Voice (local TTS/ASR) | 🧭 Exploring |
+| GitHub traffic → panel integration | 🚧 In progress |
+| Community plugins API | 🧭 Exploring |
+
+> Want to help? Roadmap suggestions and PRs are welcome.
+
 ## Status
 
 Early but real. ORBION runs a live personal setup 24/7 on a free-tier ARM VM.
