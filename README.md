@@ -23,6 +23,12 @@ a coordinator agent that delegates work to specialized agents, a live web consol
 a Telegram interface, and even a **Wear OS watch face** that shows what your agents
 are doing in real time.
 
+<div align="center">
+<img src="assets/demo-desktop.png" alt="ORBION web console — overview" width="92%"/>
+<br/>
+<sub><i>The live console (demo data): agents around the office, service &amp; LLM-pool limits, KPI strip.</i></sub>
+</div>
+
 It was built around a stubborn constraint: **run on free infrastructure, never leak
 personal data, never depend on one AI vendor.**
 
