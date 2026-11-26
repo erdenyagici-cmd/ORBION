@@ -1,0 +1,9 @@
+# Requirements for ORBION
+# The core is intentionally stdlib-first (no heavy dependencies).
+# These cover the optional integrations.
+
+# HTTP client (if not using stdlib)
+requests>=2.31
+
+# Optional: local embeddings / research helpers you may add later
+# sentence-transformers>=2.2
