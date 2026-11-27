@@ -6,6 +6,7 @@
 Zero cloud lock-in · modular LLM providers · your data stays on your box.
 
 [![Live demo](https://img.shields.io/badge/▶_Live_demo-open-0ea5e9?style=for-the-badge)](https://evren-demo.erdenyagici.workers.dev/operations.html)
+[![Website](https://img.shields.io/badge/%E2%96%B6_orbion--site-Landing_page-0ea5e9?style=for-the-badge)](https://orbion-site.erdenyagici.workers.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)
@@ -21,6 +22,7 @@ Zero cloud lock-in · modular LLM providers · your data stays on your box.
 
 ---
 
+> **Landing page:** <https://orbion-site.erdenyagici.workers.dev>
 > **Try it live:** <https://evren-demo.erdenyagici.workers.dev/operations.html> — password `123456`
 > A read-only instance with **synthetic data**. Every write endpoint is blocked server-side (`403`).
 
