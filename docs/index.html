@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ORBION — Self-hosted Multi-Agent AI Office</title>
+<meta name="description" content="Self-hosted multi-agent AI office: coordinator + specialist agents, live console, live topology, Wear OS health bridge, provider-agnostic LLM failover." />
+<meta property="og:title" content="ORBION — Self-hosted Multi-Agent AI Office" />
+<meta property="og:description" content="Multi-agent orchestration, live console, live topology, Wear OS bridge, LLM failover. Runs on a free-tier VM." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://raw.githubusercontent.com/erdenyagici-cmd/ORBION/main/assets/showcase/overview.png" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='26' fill='%230ea5e9'/%3E%3C/svg%3E" />
+<style>
+  :root{
+    --bg:#05070d; --panel:#0b1119; --line:rgba(130,165,215,.18);
+    --txt:#eaf2ff; --muted:#93a6c4; --dim:#5b6a85;
+    --cyan:#22d3ee; --violet:#818cf8; --pink:#f472b6; --ok:#34d399; --gold:#fcd34d;
+    --font:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--txt); font:16px/1.65 var(--font);
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  a{color:inherit}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+  section{position:relative}
+
+  /* ---------- arka plan ---------- */
+  .glow{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .glow i{position:absolute;border-radius:50%;filter:blur(110px);opacity:.42}
+  .glow i:nth-child(1){width:620px;height:620px;left:-180px;top:-220px;background:var(--cyan)}
+  .glow i:nth-child(2){width:560px;height:560px;right:-200px;top:120px;background:var(--violet)}
+  .glow i:nth-child(3){width:520px;height:520px;left:38%;bottom:-280px;background:var(--pink);opacity:.24}
+  .grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:linear-gradient(rgba(120,160,220,.05) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(120,160,220,.05) 1px,transparent 1px);
+    background-size:56px 56px;
+    -webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 30%,transparent 78%);
+    mask-image:radial-gradient(ellipse at 50% 0%,#000 30%,transparent 78%)}
+  main,header,footer{position:relative;z-index:1}
+
+  /* ---------- nav ---------- */
+  header{position:sticky;top:0;z-index:20;backdrop-filter:blur(12px);
+    background:rgba(5,7,13,.72);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;gap:14px;height:64px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.14em;font-size:15px}
+  .brand .orb{width:26px;height:26px;border-radius:50%;
+    background:conic-gradient(from 210deg,var(--cyan),var(--violet),var(--pink),var(--cyan));
+    box-shadow:0 0 22px rgba(129,140,248,.6)}
+  .nav .sp{flex:1}
+  .nav a.lnk{color:var(--muted);text-decoration:none;font-size:14px;font-weight:600;padding:8px 10px;border-radius:8px}
+  .nav a.lnk:hover{color:var(--txt);background:rgba(255,255,255,.05)}
+
+  /* ---------- butonlar ---------- */
+  .btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;font-weight:700;
+    font-size:14.5px;padding:12px 20px;border-radius:11px;border:1px solid transparent;transition:.18s}
+  .btn.primary{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#04121c;
+    box-shadow:0 10px 30px rgba(34,211,238,.25)}
+  .btn.primary:hover{transform:translateY(-2px);box-shadow:0 14px 38px rgba(34,211,238,.36)}
+  .btn.ghost{border-color:var(--line);color:var(--txt);background:rgba(255,255,255,.03)}
+  .btn.ghost:hover{background:rgba(255,255,255,.08);border-color:rgba(160,195,255,.42)}
+
+  /* ---------- hero ---------- */
+  .hero{padding:86px 0 54px;text-align:center}
+  .pill{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--ok);
+    border:1px solid rgba(52,211,153,.35);background:rgba(52,211,153,.09);
+    padding:7px 14px;border-radius:999px;margin-bottom:22px}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);
+    box-shadow:0 0 10px var(--ok);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  h1{font-size:clamp(34px,5.4vw,62px);line-height:1.08;margin:0 0 20px;letter-spacing:-.022em;font-weight:800}
+  h1 .grad{background:linear-gradient(100deg,var(--cyan),var(--violet) 52%,var(--pink));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{font-size:clamp(16px,1.6vw,19.5px);color:var(--muted);max-width:730px;margin:0 auto 32px}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+  .hint{color:var(--dim);font-size:13px}
+  .hint code{background:rgba(255,255,255,.07);padding:2px 7px;border-radius:5px;font-family:var(--mono);color:var(--gold)}
+
+  /* ---------- ekran görüntüsü ---------- */
+  .shot{margin:46px auto 0;max-width:1080px;border-radius:18px;overflow:hidden;
+    border:1px solid rgba(130,165,215,.24);
+    box-shadow:0 40px 90px rgba(0,0,0,.62),0 0 0 1px rgba(255,255,255,.03) inset;
+    background:#070c14}
+  .shot img{display:block;width:100%;height:auto}
+
+  /* ---------- bölüm başlığı ---------- */
+  .sec{padding:74px 0}
+  .eyebrow{font-size:12.5px;font-weight:800;letter-spacing:.17em;text-transform:uppercase;
+    color:var(--cyan);margin-bottom:12px}
+  h2{font-size:clamp(25px,3.1vw,36px);line-height:1.2;margin:0 0 14px;letter-spacing:-.018em}
+  .sub{color:var(--muted);max-width:660px;margin:0 0 34px}
+
+  /* ---------- kartlar ---------- */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:16px}
+  .card{background:linear-gradient(180deg,rgba(17,28,44,.86),rgba(9,14,22,.9));
+    border:1px solid var(--line);border-radius:16px;padding:22px;transition:.2s}
+  .card:hover{transform:translateY(-3px);border-color:rgba(160,195,255,.4);
+    box-shadow:0 18px 44px rgba(0,0,0,.42)}
+  .card .ico{font-size:22px;line-height:1;margin-bottom:12px;display:block}
+  .card h3{margin:0 0 7px;font-size:16.5px;font-weight:800}
+  .card p{margin:0;color:var(--muted);font-size:14.5px}
+
+  /* ---------- gif blokları ---------- */
+  .gifBlock{margin-bottom:34px}
+  .gifBlock .cap{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .gifBlock .cap b{font-size:17px}
+  .gifBlock .cap span{color:var(--dim);font-size:13.5px}
+  .gifFrame{border-radius:16px;overflow:hidden;border:1px solid rgba(130,165,215,.22);
+    box-shadow:0 28px 66px rgba(0,0,0,.55)}
+  .gifFrame img{display:block;width:100%;height:auto}
+
+  /* ---------- tablo ---------- */
+  .tbl{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:8px}
+  .tbl th,.tbl td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .tbl th{color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:800}
+  .tbl td:first-child{color:var(--muted);width:38%}
+  .tbl td b{color:var(--txt)}
+  .tblWrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(11,17,25,.66)}
+
+  /* ---------- mimari ---------- */
+  .arch{border:1px solid rgba(130,165,215,.2);border-radius:16px;overflow:hidden;background:#060a11}
+  .arch img{display:block;width:100%;height:auto}
+
+  /* ---------- kod ---------- */
+  pre{background:#080e16;border:1px solid var(--line);border-radius:12px;padding:18px;
+    overflow-x:auto;font-family:var(--mono);font-size:13.5px;color:#d6e4f5;margin:0}
+  pre .c{color:var(--dim)}
+  pre .k{color:var(--cyan)}
+
+  /* ---------- footer ---------- */
+  footer{border-top:1px solid var(--line);padding:40px 0;margin-top:40px}
+  .foot{display:flex;gap:16px;align-items:center;flex-wrap:wrap;color:var(--dim);font-size:13.5px}
+  .foot .sp{flex:1}
+  .foot a{color:var(--muted);text-decoration:none}
+  .foot a:hover{color:var(--txt)}
+
+  @media (max-width:760px){
+    .hero{padding:56px 0 36px}
+    .sec{padding:52px 0}
+    .nav a.lnk{display:none}
+    .shot{margin-top:30px;border-radius:12px}
+  }
+</style>
+</head>
+<body>
+
+<div class="glow"><i></i><i></i><i></i></div>
+<div class="grid"></div>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="./" style="text-decoration:none">
+      <span class="orb"></span> ORBION
+    </a>
+    <span class="sp"></span>
+    <a class="lnk" href="#features">Özellikler</a>
+    <a class="lnk" href="#panels">Paneller</a>
+    <a class="lnk" href="#arch">Mimari</a>
+    <a class="btn primary" href="https://evren-demo.erdenyagici.workers.dev/operations.html" target="_blank" rel="noopener">Canlı demo →</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="pill"><span class="dot"></span> Production'da çalışıyor</div>
+
+      <h1>Kendi sunucunda<br/><span class="grad">multi-agent AI ofisi</span></h1>
+
+      <p class="lead">
+        ORBION tek bir küçük sunucuyu — ücretsiz katman bir VM yeterli — kişisel bir
+        <b>AI ofisine</b> çevirir: iş dağıtan koordinatör, uzman ajanlar, canlı kontrol paneli,
+        Telegram arayüzü ve <b>Wear OS</b> sağlık köprüsü.
+      </p>
+
+      <div class="cta">
+        <a class="btn primary" href="https://evren-demo.erdenyagici.workers.dev/operations.html" target="_blank" rel="noopener">🔴 Canlı demoyu aç</a>
+        <a class="btn ghost" href="https://github.com/erdenyagici-cmd/ORBION" target="_blank" rel="noopener">⭐ GitHub'da kaynak</a>
+      </div>
+      <div class="hint">Demo şifresi: <code>123456</code> · sentetik veri · tüm yazma uçları kapalı (403)</div>
+
+      <div class="shot">
+        <img src="https://raw.githubusercontent.com/erdenyagici-cmd/ORBION/main/assets/showcase/overview.png"
+             alt="ORBION kontrol paneli — genel bakış" loading="eager" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ÖZELLİKLER ================= -->
+  <section class="sec" id="features">
+    <div class="wrap">
+      <div class="eyebrow">Neden farklı</div>
+      <h2>Bulut bağımlılığı yok, tek satıcı yok, veri sende</h2>
+      <p class="sub">Sıfır maliyet önce gelir: yapılabilecek her şeyi deterministik kod yapar, LLM son çaredir.</p>
+
+      <div class="cards">
+        <div class="card">
+          <span class="ico">🧠</span>
+          <h3>Multi-agent orkestrasyon</h3>
+          <p>Koordinatör uzmanlara iş dağıtır. Her çağrı <code>call_id</code>, durum ve süre ile kaydedilir — “yaptım” her zaman kanıtlıdır.</p>
+        </div>
+        <div class="card">
+          <span class="ico">🔀</span>
+          <h3>Sağlayıcıdan bağımsız LLM havuzu</h3>
+          <p>Gemini → Groq → Cloudflare → yerel Ollama. Biri düşerse veya kotası biterse otomatik devreder. Tek hata noktası yok.</p>
+        </div>
+        <div class="card">
+          <span class="ico">⌬</span>
+          <h3>Canlı topoloji</h3>
+          <p>Her bağlantı kendi periyodunda ölçülür (iç 15sn · dış 30sn · tünel 60sn) ve yeşil/sarı/kırmızı yanar.</p>
+        </div>
+        <div class="card">
+          <span class="ico">⌚</span>
+          <h3>Pil dostu Wear OS köprüsü</h3>
+          <p>Samsung Health Sensor SDK, kısa süreli wake lock, 10 dk poll, cihaz tarafında zaman damgası, idempotent batch.</p>
+        </div>
+        <div class="card">
+          <span class="ico">✈</span>
+          <h3>Bot yönetimi</h3>
+          <p>Her Telegram botu için ayrı kullanıcı-ID beyaz listesi, panelden yönetilir; değişiklik restart gerektirmez.</p>
+        </div>
+        <div class="card">
+          <span class="ico">🔒</span>
+          <h3>Fail-closed güvenlik</h3>
+          <p>Kapsamlı oturumlar (<code>master</code>/<code>doctor</code>/<code>viewer</code>), master token asla istemciye dönmez, loglarda maskeleme.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PANELLER ================= -->
+  <section class="sec" id="panels">
+    <div class="wrap">
+      <div class="eyebrow">Canlı panel</div>
+      <h2>Ofis ve topoloji — gerçek veriyle</h2>
+      <p class="sub">Animasyon değil: her balon veritabanındaki gerçek bir olay satırına dayanır.</p>
+
+      <div class="gifBlock">
+        <div class="cap"><b>Canlı ofis</b><span>ajanlar, gerçek olay balonları, durum ışıkları</span></div>
+        <div class="gifFrame">
+          <img src="https://raw.githubusercontent.com/erdenyagici-cmd/ORBION/main/assets/showcase/demo-office.gif"
+               alt="ORBION canlı ofis animasyonu" loading="lazy" />
+        </div>
+      </div>
+
+      <div class="gifBlock">
+        <div class="cap"><b>Canlı topoloji</b><span>her bağlantı ayrı ölçülür, tıklanınca servise gider</span></div>
+        <div class="gifFrame">
+          <img src="https://raw.githubusercontent.com/erdenyagici-cmd/ORBION/main/assets/showcase/demo-mimari.gif"
+               alt="ORBION canlı mimari topolojisi" loading="lazy" />
+        </div>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <h3>Genel Bakış</h3>
+          <p>Ajanlar, servisler ve KPI'lar tek ekranda.</p>
+        </div>
+        <div class="card">
+          <h3>API &amp; Kota</h3>
+          <p>Maskeli anahtarlar, canlı kullanım, devretme durumu.</p>
+        </div>
+        <div class="card">
+          <h3>Sistem</h3>
+          <p>CPU / RAM / disk / servis sağlığı.</p>
+        </div>
+        <div class="card">
+          <h3>Sağlık</h3>
+          <p>İzole, doktorun sahip olduğu görünüm.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MİMARİ ================= -->
+  <section class="sec" id="arch">
+    <div class="wrap">
+      <div class="eyebrow">Mimari</div>
+      <h2>Tek işlem, iş parçacığı izole ajanlar</h2>
+      <p class="sub">Caddy TLS'i sonlandırır, <code>127.0.0.1:8090</code>'a proxy'ler; ajan hem paneli hem JSON API'yi hem de sağlık ingest ucunu servis eder.</p>
+
+      <div class="arch">
+        <img src="https://raw.githubusercontent.com/erdenyagici-cmd/ORBION/main/assets/showcase/mimari-final.svg"
+             alt="ORBION sistem mimarisi" loading="lazy" />
+      </div>
+
+      <div class="tblWrap" style="margin-top:26px">
+        <table class="tbl">
+          <thead><tr><th>Katman</th><th>Seçim</th></tr></thead>
+          <tbody>
+            <tr><td>Sunucu</td><td><b>Oracle Cloud Always Free</b> — 4 OCPU / 24 GB ARM, 195 GB disk</td></tr>
+            <tr><td>Runtime</td><td><b>Python 3.12</b> stdlib HTTP sunucu, systemd, SQLite</td></tr>
+            <tr><td>Panel</td><td><b>Vanilla JS + SVG</b> — build yok, CDN yok, framework yok</td></tr>
+            <tr><td>LLM</td><td><b>Çok sağlayıcılı havuz</b> — otomatik devretme</td></tr>
+            <tr><td>Maliyet</td><td><b>$0 / ay</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= KURULUM ================= -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="eyebrow">Kurulum</div>
+      <h2>Üç komut, sonra panel</h2>
+      <p class="sub">Tek gereksinim: Python 3.10+ ve bir sunucu.</p>
+
+      <pre><span class="c"># 1) klonla</span>
+git clone https://github.com/erdenyagici-cmd/ORBION.git
+cd ORBION
+
+<span class="c"># 2) yapılandır</span>
+cp .env.example .env        <span class="c"># sağlayıcı anahtarlarını gir</span>
+python3 -m venv .venv &amp;&amp; . .venv/bin/activate
+pip install -r requirements.txt
+
+<span class="c"># 3) çalıştır (panel :8090)</span>
+python3 scripts/agent.py</pre>
+
+      <p class="sub" style="margin:22px 0 0">
+        Sonra <code>http://localhost:8090/operations.html</code> adresini aç ve
+        <code>PANEL_PASSWORD</code> ile giriş yap.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>ORBION · self-hosted multi-agent AI office</span>
+    <span class="sp"></span>
+    <a href="https://github.com/erdenyagici-cmd/ORBION" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://evren-demo.erdenyagici.workers.dev/operations.html" target="_blank" rel="noopener">Canlı demo</a>
+    <a href="https://github.com/erdenyagici-cmd/ORBION/blob/main/README.tr.md" target="_blank" rel="noopener">Türkçe README</a>
+  </div>
+</footer>
+
+</body>
+</html>
