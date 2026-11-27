@@ -1,197 +1,162 @@
 <div align="center">
 
-# ⬡ ORBION
+# 🛰️ ORBION
 
 **A self-hosted, multi-agent AI office.**
-Zero cloud lock-in. Modular LLM providers. Your data stays on your box.
+Zero cloud lock-in · modular LLM providers · your data stays on your box.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
-![Self-hosted](https://img.shields.io/badge/self--hosted-%E2%9C%93-success)
-![Zero-cost](https://img.shields.io/badge/LLM%20failover-Gemini%20%C2%B7%20Groq%20%C2%B7%20Cloudflare%20%C2%B7%20Ollama-informational)
+[![Live demo](https://img.shields.io/badge/▶_Live_demo-open-0ea5e9?style=for-the-badge)](https://evren-demo.erdenyagici.workers.dev/operations.html)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
 
-*English · [Türkçe](README.tr.md) · [Deutsch](README.de.md) · [العربية](README.ar.md) · [中文](README.zh.md)*
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-evidence-003B57?style=flat-square&logo=sqlite&logoColor=white)
+![Wear OS](https://img.shields.io/badge/Wear_OS-companion-4285F4?style=flat-square&logo=wearos&logoColor=white)
+![Telegram](https://img.shields.io/badge/Telegram-interface-26A5E4?style=flat-square&logo=telegram&logoColor=white)
+![Cloudflare](https://img.shields.io/badge/Cloudflare-Tunnel_/_Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white)
+![Self-hosted](https://img.shields.io/badge/self--hosted-✔-success?style=flat-square)
+
+*English · [Türkçe](README.tr.md)*
 
 </div>
+
+---
+
+> **Try it live:** <https://evren-demo.erdenyagici.workers.dev/operations.html> — password `123456`
+> A read-only instance with **synthetic data**. Every write endpoint is blocked server-side (`403`).
 
 ---
 
 ## What is ORBION?
 
 ORBION turns a single small server (a free-tier VM is enough) into a **personal AI office**:
-a coordinator agent that delegates work to specialized agents, a live web console,
-a Telegram interface, and even a **Wear OS watch face** that shows what your agents
-are doing in real time.
+a coordinator agent that delegates work to specialists, a live web console, a Telegram
+interface, and a **Wear OS bridge** that streams health telemetry in real time.
+
+It runs on ~$0/month: Oracle Cloud free tier, no GPU, no vendor lock-in, no per-token anxiety.
 
 <div align="center">
-<img src="assets/demo-desktop.png" alt="ORBION web console — overview" width="92%"/>
-<br/>
-<sub><i>The live console (demo data): agents around the office, service &amp; LLM-pool limits, KPI strip.</i></sub>
+
+### Live office — real agent activity, not a canned animation
+<img src="assets/showcase/demo-office.gif" alt="ORBION live office" width="88%"/>
+
+### Live architecture — every link is probed, green/amber/red
+<img src="assets/showcase/demo-mimari.gif" alt="ORBION live topology" width="88%"/>
+
 </div>
 
-It was built around a stubborn constraint: **run on free infrastructure, never leak
-personal data, never depend on one AI vendor.**
+---
+
+## Screenshots
+
+| | |
+|---|---|
+| <img src="assets/showcase/overview.png" width="420"/><br/><sub><b>Overview</b> — agents, services, KPIs at a glance</sub> | <img src="assets/showcase/agents.png" width="420"/><br/><sub><b>Agents</b> — real lifecycle states</sub> |
+| <img src="assets/showcase/keys.png" width="420"/><br/><sub><b>API & quota</b> — masked keys, live usage, failover state</sub> | <img src="assets/showcase/system.png" width="420"/><br/><sub><b>System</b> — CPU / RAM / disk / services</sub> |
+| <img src="assets/showcase/doruk.png" width="420"/><br/><sub><b>Health</b> — isolated, doctor-owned view (demo data)</sub> | <img src="assets/showcase/botlar.png" width="420"/><br/><sub><b>Bot management</b> — per-bot Telegram allowlist</sub> |
+
+<sub>Static vector architecture map: [`assets/showcase/mimari-final.svg`](assets/showcase/mimari-final.svg)</sub>
+
+---
+
+## Architecture
 
 ```
-                  ┌──────────────────────────────────────────┐
-                  │              ORBION  CORE                │
-                  │                                          │
-  Telegram ─────▶ │  Coordinator ──▶ Agent Registry          │
-  Web panel ────▶ │       │              │                   │
-  Watch ────────▶ │       ▼              ▼                   │
-                  │  LLM Pool      Tool/Action layer         │
-                  │  (Gemini·Groq  (mail, files, research,   │
-                  │   ·CF·Ollama)   scheduling, queue)       │
-                  │       │              │                   │
-                  │       ▼              ▼                   │
-                  │   SQLite state / evidence (call_id)      │
-                  └──────────────────────────────────────────┘
+        Clients / bots                          External services
+ ┌──────────┬──────────┬──────────┐      ┌──────────┬──────────┬──────────┐
+ │ Browser  │  Watch   │ Telegram │      │ LLM APIs │  Groq    │  Gmail   │
+ └────┬─────┴────┬─────┴────┬─────┘      └────┬─────┴────┬─────┴────┬─────┘
+      │ HTTPS    │ POST     │ bot API         │          │          │
+      ▼          ▼          ▼                 ▲          ▲          ▲
+ ┌────────────────────────────────────────────┴──────────┴──────────┴───┐
+ │                     ORACLE CLOUD VM  (free tier, ARM)                 │
+ │  ┌─────────┐  ┌──────────────┐  ┌──────────┐  ┌─────────┐  ┌───────┐ │
+ │  │  Caddy  │→ │ evren-agent  │  │  SQLite  │  │ Ollama  │  │ disk  │ │
+ │  │  (TLS)  │  │  :8090 HTTP  │  │ app.db   │  │ local   │  │backups│ │
+ │  └─────────┘  └──────────────┘  └──────────┘  └─────────┘  └───────┘ │
+ └───────────────────────────────────────────────────────────────────────┘
 ```
+
+**Request path:** Caddy terminates TLS → reverse-proxies to `127.0.0.1:8090` → the agent
+serves the panel, the JSON API, and the health ingest endpoint.
+
+---
 
 ## Why it's different
 
 | | Typical AI assistant | **ORBION** |
 |---|---|---|
 | Where it runs | Vendor cloud | **Your server** |
-| AI vendor | Locked to one | **Hot-swappable pool** (Gemini · Groq · Cloudflare · local Ollama) |
+| AI vendor | Locked to one | **Hot-swappable pool** (Gemini → Groq → Cloudflare → local Ollama) |
 | Cost | Per-token billing | **Free tiers + local fallback** |
 | Proof of work | "I did it" | **`call_id` + status for every agent call** |
 | Data | Uploaded to someone | **Stays on your box** |
 | Presence | A chat window | **Live office, watch face, Telegram** |
 
+---
+
 ## Features
 
-- **Multi-agent orchestration** — a coordinator delegates to specialized agents
-  (assistant, coder, mail archivist, researcher). Every call is logged with a
-  `call_id`, status and duration, so "I did it" is always backed by evidence.
-- **Provider-agnostic LLM pool** — OpenAI-compatible adapters with automatic
-  failover: Gemini → Groq → Cloudflare Workers AI → local Ollama. When one provider
-  is down or out of quota, ORBION transparently moves to the next. No single point
-  of failure.
-- **Zero-cost first** — deterministic code handles everything it can (no LLM call
-  for classification, routing, counting). The LLM is a *last resort*, not the default.
-- **Telegram interface** — natural conversation, plus a separate channel per agent.
-- **Live web console** — a real-time "office" view of your agents, a systems panel
-  with per-service limits, and a one-screen operational dashboard.
-- **Wear OS companion** — a watch face with your agents arranged around the dial and
-  a companion app that shows the live office; state lights update from the server.
-- **Safety by design** — the assistant never fabricates citations, never claims it
-  performed an action it didn't, and escalates honestly when a tool is unavailable.
+- **Multi-agent orchestration** — a coordinator delegates to specialists (assistant,
+  coder, mail archivist, researcher). Every call is logged with `call_id`, status and
+  duration, so *"I did it"* is always backed by evidence.
+- **Provider-agnostic LLM pool** — OpenAI-compatible adapters with automatic failover.
+  When a provider is down or out of quota, ORBION moves to the next. No single point of failure.
+- **Zero-cost first** — deterministic code handles everything it can (no LLM call for
+  classification, routing, counting). The LLM is a *last resort*, not the default.
+- **Telegram interface** — natural conversation, plus a separate channel per agent,
+  with per-bot user-ID allowlists managed from the panel.
+- **Live web console** — real-time office view, per-service health, one-screen ops dashboard,
+  and a **live topology** map where every link is probed and color-coded.
+- **Wear OS bridge** — battery-first health telemetry: short-lived wake locks, 10-minute
+  polling, opt-in sensors, device-side timestamps, idempotent batches.
+- **Safety by design** — never fabricates citations, never claims an action it didn't take,
+  escalates honestly when a tool is unavailable.
+
+---
 
 ## Architecture highlights
 
 - **Single-process core, thread-isolated agents** — cheap to run on 2–4 vCPU.
-- **SQLite with a strict evidence model** — `agent_calls`, `agent_tasks`,
-  `agent_events`; every delegated task is traceable end-to-end.
-- **Atomic job queue** — `claim / heartbeat / reclaim` with timeouts; a crashed
-  worker never silently loses a job.
-- **Fail-closed security** — missing tokens disable protected endpoints rather than
-  opening them; no secrets in logs, no wildcard CORS.
-- **Prompt-injection & SSRF aware** — external fetches reject private/loopback/
-  cloud-metadata ranges; untrusted content is fenced before reaching the model.
+- **SQLite with a strict evidence model** — `agent_calls`, `agent_tasks`, `agent_events`;
+  every delegated task is traceable end-to-end.
+- **Atomic job queue** — `claim / heartbeat / reclaim` with timeouts; a crashed worker
+  never silently loses a job.
+- **Fail-closed security** — missing tokens disable protected endpoints rather than opening
+  them; scoped session tokens; no secrets in logs; no wildcard CORS.
+- **Prompt-injection & SSRF aware** — external fetches reject private/loopback ranges.
 
 ---
 
-## 🩺 Privacy-First Health Companion *(reference design — not shipped)*
+## Security model
 
-ORBION's architecture was forged on a **health-critical** use case that we
-deliberately **do not publish**. Health data is the most sensitive class of personal
-data there is, and an open repo is the wrong place for it. But the design is worth
-describing, because it shows the trust boundary ORBION is built around.
-
-> **What it does (privately).** A dedicated health agent — written as a calm,
-> PhD-level physician persona — manages a single living medical record for its owner,
-> alongside a wearable data pipeline and an evidence-based research loop.
-
-**Structured, source-tagged record**
-Every entry is tagged by provenance — `USER_FACT`, `DEVICE_DATA`, `DOCTOR_NOTE`,
-`RESEARCH_NOTE`, `PLAN`, `FOLLOW_UP`, `RESULT`, `DOCUMENT_FACT`,
-`UNVERIFIED_EXTRACTION` — with full history. New information never overwrites old;
-the timeline is preserved. The agent keeps *facts*, *observations* and *follow-ups*
-strictly separate (a single coffee entry does not create a "caffeine problem").
-
-**Evidence-based research, honestly labelled**
-Pulls from WHO, PubMed, national medicines agencies and clinical guidelines; states
-the strength of evidence (strong / moderate / mixed / limited); and **never invents
-a citation**. If the research tool is unavailable, it says so instead of pretending
-it searched.
-
-**Wearable ingestion**
-Galaxy Watch → self-hosted server: ECG waveform, heart rate, SpO₂, sleep and activity
-flow in through a **dedicated, short-lived device token** — never the master panel
-token. Raw signals are stored as measurement, explicitly *not* as diagnosis.
-
-**Hard safety rails**
-No diagnosis, no prescription, no dosage changes — the agent *informs*, the human
-decides. Red-flag symptoms (chest pain, stroke signs, bleeding, self-harm) skip long
-analysis and escalate to emergency services (112 in Türkiye). Medication questions get
-real information with a firm "discuss this with your physician" — never "just take it."
-
-**Isolation & zero leakage**
-The health agent's memory is isolated from the general assistant. Raw health payloads
-never reach office bubbles, generic logs, other agents, or a local small model.
-External LLM calls carry only *generic* medical questions — personal values, names and
-measurements never leave the box.
-
-**Why it's not in this repo**
-KVKK/GDPR-grade consent, audit trails and the medical-liability surface belong behind
-a carefully reviewed boundary — not in a public clone. The full design (data isolation,
-consent gates, audit log) is documented privately. This is the kind of rigor ORBION is
-built to support.
+| Layer | Measure |
+|---|---|
+| Panel auth | Password → short-lived signed session token (never returns the master token) |
+| Scopes | `master` / `doctor` / `viewer` — enforced server-side, fail-closed |
+| Bots | Per-bot Telegram user-ID allowlist stored in the DB, hot-reloaded without restart |
+| Secrets | `.env` only, `chmod 600`, never in code or logs |
+| Health ingest | Separate token, separate endpoint, count-only responses |
+| Logging | Bearer tokens, passwords, ID numbers, IBANs redacted before storage |
 
 ---
 
 ## Quick start
 
 ```bash
-git clone https://github.com/erdenyagici-cmd/orbion.git
-cd orbion
-cp .env.example .env        # fill in your provider keys & tokens
+git clone https://github.com/erdenyagici-cmd/ORBION.git
+cd ORBION
+cp .env.example .env            # add your provider keys
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-python3 scripts/agent.py    # starts the core (bots + web console)
+python3 scripts/agent.py        # serves the panel on :8090
 ```
 
-See **[docs/SETUP.md](docs/SETUP.md)** for the full walkthrough (systemd, Cloudflare
-Tunnel, Telegram bot, Wear OS build).
-
-## Security model
-
-- Separate tokens per surface: panel, health-ingest, watch — **no shared master token**
-  across trust boundaries.
-- Fail-closed: an unset token disables its endpoint instead of opening it.
-- No secrets in logs, argv, or commits; `.env` is git-ignored and `chmod 600`.
-- External fetching is SSRF-guarded (private / loopback / metadata IPs rejected).
-- Shell/exec features are **off by default**, behind an explicit opt-in flag.
-
-## Roadmap
-
-| Area | Status |
-|---|---|
-| Multi-agent orchestration & evidence model | ✅ Shipped |
-| Provider-agnostic LLM pool (failover) | ✅ Shipped |
-| Telegram interface | ✅ Shipped |
-| Live web console (office + systems panel) | ✅ Shipped |
-| Wear OS watch face + companion | ✅ Shipped |
-| Zero-cost tiering (code-first, LLM-last) | ✅ Shipped |
-| Real multi-provider free pool (Gemini · Groq · Cloudflare) | ✅ Shipped |
-| PWA install ("add to home screen") | 🚧 Planned |
-| Health companion reference (private) | 🔒 Documented, not shipped |
-| Voice (local TTS/ASR) | 🧭 Exploring |
-| GitHub traffic → panel integration | 🚧 In progress |
-| Community plugins API | 🧭 Exploring |
-
-> Want to help? Roadmap suggestions and PRs are welcome.
-
-## Status
-
-Early but real. ORBION runs a live personal setup 24/7 on a free-tier ARM VM.
-APIs and internal structure may change; the safety and evidence principles will not.
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+Open `http://localhost:8090/operations.html`, sign in with `PANEL_PASSWORD`.
 
 ---
 
-<div align="center"><sub>Built on a free-tier server, with a stubborn belief that your AI should be yours.</sub></div>
+<div align="center">
+
+<sub><i>Your AI should be yours.</i> 📡</sub>
+
+</div>
