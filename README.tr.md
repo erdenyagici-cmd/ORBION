@@ -10,11 +10,14 @@ Bulut bağımlılığı yok. Değiştirilebilir model havuzu. Verin senin makine
 ![Self-hosted](https://img.shields.io/badge/kendi%20sunucunda-%E2%9C%93-success)
 ![Zero-cost](https://img.shields.io/badge/s%C4%B1f%C4%B1r%20maliyet-Gemini%20%C2%B7%20Groq%20%C2%B7%20Cloudflare%20%C2%B7%20Ollama-informational)
 
-*[English](README.md) · Türkçe · [Deutsch](README.de.md) · [العربية](README.ar.md) · [中文](README.zh.md)*
+*[English](README.md) - Turkce*
 
 </div>
 
 ---
+
+> **Canli demo:** <https://evren-demo.erdenyagici.workers.dev/operations.html> - sifre 123456
+> Sentetik veriyle, salt-okunur. Tum yazma uclari sunucu tarafinda kapali (403).
 
 ## ORBION nedir?
 
